@@ -1,3 +1,4 @@
+from configparser import ConfigParser
 from urllib.parse import quote
 
 from pymongo import MongoClient
@@ -10,9 +11,27 @@ class MongoRepository:
         self._database_name = database_name
         self._collection_name = collection_name
 
+
     @staticmethod
     def _get_connection():
-        mongo_uri = "mongodb://[user]:" + quote("[password]") + "@[host]:[port number]/[DB name]?authSource=admin"
+        config = ConfigParser()
+        config.read('config.ini')
+
+        try:
+            username = config["DATABASE"]["username"]
+            password = config["DATABASE"]["password"]
+            host = config["DATABASE"]["host"]
+            port = config["DATABASE"]["port"]
+            database_name = config["DATABASE"]["database_name"]
+            collection_name = config["DATABASE"]["collection_name"]
+            option = config["DATABASE"]["option"]
+
+        except KeyError as ke:
+            print(ke, end='')
+            print("environment required")
+            exit(1)
+
+        mongo_uri = "mongodb://"+ username +":" + quote(password) + "@"+ host + ":" + port + "/" + database_name + "_" + collection_name + "?" + option;
         return MongoClient(mongo_uri)
 
     @property
@@ -33,6 +52,12 @@ class MongoRepository:
             return None
 
         return self.collection.find_one(_filter)
+
+    def find(self, _filter: dict):
+        if not _filter:
+            return None
+
+        return self.collection.find(_filter)
 
     def update_one(self, _filter: dict, update_data: dict):
         if not update_data:

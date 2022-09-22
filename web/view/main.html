@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Manager</title>
+</head>
+<body>
+    <p><form id = "form" method="post">
+          transaction_id : <input type="text" id="transaction_id" size="30">
+        &nbsp;&nbsp;client_id : <input type="text" id="client_id" size="30">
+        &nbsp;&nbsp;ip : <input type="text" id="ip" size="30"> <input type = "submit" value = "검색" id = "search"> </p>
+
+        <div style = "padding: 20px 10px 2px 3px;"></div> <!-- 공백 -->
+
+        <p id="result_log"></p>
+    </form>
+
+    <div style = "padding: 50px 10px 2px 3px;"></div> <!-- 공백 -->
+
+
+    <script type="text/javascript">
+
+        var print_log = "";
+        var request_columns = ["[method]", "  [status_code]", "  [status_name]", "  [url]"]
+
+        document.getElementsByTagName("form")[0].onsubmit = function(){
+            fetch('http://127.0.0.1:8000/log', {
+              method: 'POST',
+              body: JSON.stringify({
+                transaction_id:this.transaction_id.value,
+                client_id:this.client_id.value,
+                ip:this.ip.value,
+              }),
+              headers: {
+                'Content-type': 'application/json; charset=UTF-8',
+              }
+            })
+            .then(function(data){
+                return data.json()
+            })
+            .then(value=>{
+                print_log = "";
+                for(let i=0; i<value.length; i++){
+                    for(let j=0; j<Object.values(value[i]).length; j++){
+                        print_log += Object.keys(value[i])[j] + " : ";
+                        if(j == 7){
+                            var z = 0
+                            for(w of Object.values(Object.values(value[i])[j])){
+                                print_log += request_columns[z]
+                                print_log += w;
+                                z++;
+                            }
+                        }
+                        else{
+                            print_log += Object.values(value[i])[j];
+                        }
+                        print_log += "</br>"
+                    }
+                    print_log = print_log + "-------------------------------------------------------------------------</br>"
+                }
+                p=document.getElementById("result_log");
+                p.innerHTML = print_log;
+            })
+            .catch(error => console.error('Error:', error));
+
+            return false;
+        }
+
+    </script>
+</body>
+</html>
+
